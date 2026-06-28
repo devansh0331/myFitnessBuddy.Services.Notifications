@@ -74,37 +74,45 @@ class NotificationService {
   }
 
   /**
-   * Send push notification to a single user
-   */
-  async sendNotification(uid, title, body) {
-    try {
-      const subDoc = await this.db.collection('pushSubscriptions').doc(uid).get();
-      if (!subDoc.exists) {
-        console.log(`❌ No subscription for user ${uid}`);
-        return false;
-      }
-
-      const token = subDoc.data().fcmToken;
-      if (!token) {
-        console.log(`❌ No FCM token for user ${uid}`);
-        return false;
-      }
-
-      const message = {
-        notification: { title, body },
-        token: token,
-        android: { ttl: 86400000 },
-        webpush: { headers: { TTL: '86400' } },
-      };
-
-      await this.messaging.send(message);
-      console.log(`✅ Notification sent to ${uid}`);
-      return true;
-    } catch (error) {
-      console.error(`❌ Failed to send to ${uid}:`, error.message);
+ * Send push notification to a single user
+ */
+async sendNotification(uid, title, body) {
+  try {
+    const subDoc = await this.db.collection('pushSubscriptions').doc(uid).get();
+    if (!subDoc.exists) {
+      console.log(`❌ No subscription for user ${uid}`);
       return false;
     }
+
+    const token = subDoc.data().fcmToken;
+    if (!token) {
+      console.log(`❌ No FCM token for user ${uid}`);
+      // Optionally delete the doc if token is missing
+      await this.db.collection('pushSubscriptions').doc(uid).delete();
+      return false;
+    }
+
+    const message = {
+      notification: { title, body },
+      token: token,
+      android: { ttl: 86400000 },
+      webpush: { headers: { TTL: '86400' } },
+    };
+
+    await this.messaging.send(message);
+    console.log(`✅ Notification sent to ${uid}`);
+    return true;
+  } catch (error) {
+    // Handle invalid/expired tokens
+    if (error.code === 'messaging/registration-token-not-registered') {
+      console.log(`🗑️ Token for ${uid} is invalid, removing from Firestore`);
+      await this.db.collection('pushSubscriptions').doc(uid).delete();
+      return false;
+    }
+    console.error(`❌ Failed to send to ${uid}:`, error.message);
+    return false;
   }
+}
 
   /**
    * Send Good Morning notifications to all users
