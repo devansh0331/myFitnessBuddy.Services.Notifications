@@ -1,0 +1,54 @@
+name: Send Scheduled Notifications
+
+on:
+  schedule:
+    # Good Morning: 5:30 AM IST = 00:00 UTC
+    - cron: '0 0 * * *'
+    # Good Night: 11:30 PM IST = 18:00 UTC
+    - cron: '0 18 * * *'
+  workflow_dispatch:  # Allows manual triggering for testing
+
+jobs:
+  good-morning:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create service account file
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+
+      - name: Run Good Morning
+        run: node scripts/good-morning.js
+
+  good-night:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create service account file
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+
+      - name: Run Good Night
+        run: node scripts/good-night.js

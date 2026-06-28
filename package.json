@@ -1,0 +1,20 @@
+{
+  "name": "mybuddy-services-notifications",
+  "version": "1.0.0",
+  "description": "Scheduled notification service for My Fitness Buddy",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "good-morning": "node scripts/good-morning.js",
+    "good-night": "node scripts/good-night.js",
+    "test": "node scripts/test.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
